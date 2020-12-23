@@ -1,0 +1,178 @@
+---
+title: "Finding the impact of reduction of advertising revenues to newspapers"
+author: "Huynh, Vu Minh Hoang"
+date: "22th Dec, 2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(haven)
+
+data <- read_dta("Angelucci_Cage_AEJMicro_dataset.dta")
+
+
+```
+
+# Finding the impact on the reduction of advertising revenues to newspapers agency
+
+## Huynh, Vu Minh Hoang
+## 22th December, 2020
+
+Code and data supporting this analysis is available at: https://github.com/axelhvmh/final
+
+## Abstract
+The newspaper industry is in economic turmoil in recent years where there are huge competition with the Internet, competing for its potential readers as well as sources of revenue. We found that there is a positive relationship between the advertising revenue and the quality of content of a newspaper agency.
+
+Keywords: Simple linear regression, advertising revenue, number of journalists
+
+## Introduction
+
+Since the mid 2000s, newspaper agencies have seen a drop in their revenues, as well as the number of journalists under their employment. A variety of reasons such as: the change in consumer preference or the rapid rise of the Internet, could contribute to the change in quality as well as revenues for a newspaper. With the shrinkage of the industry, there are growing concerns as to whether the quality of a newspaper has decreased or not because of that.
+
+The paper "Newspapers in Times of Low Advertising Revenues" published by Charles Angelucci and Julia Cagé has extensively talked about the effects of how low advertising revenue affect a newspaper agency. What we are trying to do in this paper is to use the dataset provvided and run a simple linear regression model to see the relevance effects between the advertising revenue of a newspaper agency and the quality of content that it produces.
+
+
+
+## Data
+
+The dataset we are going to use to reproduce the model is the historical records of the French daily newspaper and French television in the period from 1960 to 1974. The dataset contains annual data about the local and national newspapers agency, as well as data for television content. In 1967, the French government relaxed its longstanding regulations against advertisement on television cable. This could be viewed as a substitute to advertisers who are using the daily newspaper to gain attentions.
+
+The raw data contains 1196 observations with 52 variables.
+Each row contains data about a single year of values for a single newspaper agency.
+Mostly each newspaper agency have 15 rows, representing the time period of 1960 to 1974.
+
+We can devide the dataset into 2 smaller dataset. A dataset for local newspaper and a dataset for national newspaper.
+
+Some baseline characteristic of the dataset:
+```{r, echo=FALSE}
+data_national = data %>% filter(national == 1)
+data_local = data %>% filter(local == 1)
+
+data1960nat = data_national %>% filter(year == 1960)
+data1961nat = data_national %>% filter(year == 1961)
+data1962nat = data_national %>% filter(year == 1962)
+data1963nat = data_national %>% filter(year == 1963)
+data1964nat = data_national %>% filter(year == 1964)
+data1965nat = data_national %>% filter(year == 1965)
+data1966nat = data_national %>% filter(year == 1966)
+data1967nat = data_national %>% filter(year == 1967)
+data1968nat = data_national %>% filter(year == 1968)
+data1969nat = data_national %>% filter(year == 1969)
+data1970nat = data_national %>% filter(year == 1970)
+data1971nat = data_national %>% filter(year == 1971)
+data1972nat = data_national %>% filter(year == 1972)
+data1973nat = data_national %>% filter(year == 1973)
+data1974nat = data_national %>% filter(year == 1974)
+
+data1960loc = data_local %>% filter(year == 1960)
+data1961loc = data_local %>% filter(year == 1961)
+data1962loc = data_local %>% filter(year == 1962)
+data1963loc = data_local %>% filter(year == 1963)
+data1964loc = data_local %>% filter(year == 1964)
+data1965loc = data_local %>% filter(year == 1965)
+data1966loc = data_local %>% filter(year == 1966)
+data1967loc = data_local %>% filter(year == 1967)
+data1968loc = data_local %>% filter(year == 1968)
+data1969loc = data_local %>% filter(year == 1969)
+data1970loc = data_local %>% filter(year == 1970)
+data1971loc = data_local %>% filter(year == 1971)
+data1972loc = data_local %>% filter(year == 1972)
+data1973loc = data_local %>% filter(year == 1973)
+data1974loc = data_local %>% filter(year == 1974)
+```
+ 
+5 point summary on revenue on advertising for the local daily newspapers
+
+```{r, echo=FALSE}
+summary(data_local$ra_cst)
+```
+
+5 point summary on revenue on advertising for the local daily newspapers
+
+```{r, echo=FALSE}
+summary(data_national$ra_cst)
+```
+
+```{r, echo=FALSE}
+
+nat = c(sum(data1960nat$nb_journ,na.rm=T),sum(data1961nat$nb_journ,na.rm=T),sum(data1962nat$nb_journ,na.rm=T),sum(data1963nat$nb_journ,na.rm=T),sum(data1964nat$nb_journ,na.rm=T),sum(data1965nat$nb_journ,na.rm=T),sum(data1966nat$nb_journ,na.rm=T),sum(data1967nat$nb_journ,na.rm=T),sum(data1968nat$nb_journ,na.rm=T),sum(data1969nat$nb_journ,na.rm=T),sum(data1970nat$nb_journ,na.rm=T),sum(data1971nat$nb_journ,na.rm=T),sum(data1972nat$nb_journ,na.rm=T),sum(data1973nat$nb_journ,na.rm=T),sum(data1974nat$nb_journ,na.rm=T))
+
+
+loc = c(sum(data1960loc$nb_journ,na.rm=T),sum(data1961loc$nb_journ,na.rm=T),sum(data1962loc$nb_journ,na.rm=T),sum(data1963loc$nb_journ,na.rm=T),sum(data1964loc$nb_journ,na.rm=T),sum(data1965loc$nb_journ,na.rm=T),sum(data1966loc$nb_journ,na.rm=T),sum(data1967loc$nb_journ,na.rm=T),sum(data1968loc$nb_journ,na.rm=T),sum(data1969loc$nb_journ,na.rm=T),sum(data1970loc$nb_journ,na.rm=T),sum(data1971loc$nb_journ,na.rm=T),sum(data1972loc$nb_journ,na.rm=T),sum(data1973loc$nb_journ,na.rm=T),sum(data1974loc$nb_journ,na.rm=T))
+```
+
+```{r, echo=FALSE}
+num_jour_nat = tibble("year" = 1960:1974, "total number of journalist working in national agency"= nat)
+num_jour_loc = tibble("year" = 1960:1974, "total number of journalist working in national agency"= loc)
+
+num_jour_nat
+num_jour_loc
+
+
+
+```
+
+
+# Model
+
+```{r, echo = FALSE}
+
+model_nat = lm(nb_journ ~ ra_cst, data = data_national) #linear regression model#
+
+
+model_loc = lm(nb_journ ~ ra_cst, data = data_local) #linear regression model#
+
+
+
+```
+We know that the quality of content of a newspaper is positively correlated with the numbers of journalists working for that newspaper, because a newsroom with more people typically could get more stories written and proof. In the paper, the researchers point out that there could be a relationship between the quality of content on a newspaper and the total revenue of advertising. So, the model we chose to use is a simple linear regression model, with the response variable is the number of journalists working in each newspaper agency and the predictor variable is the total revenue from advertising. The total numbers of journalist in the model can be understood as how much work and content is put into the newspaper. Due to the dataset contains values for both local and national newspaper agency, we will separate the two.
+
+After running linear regression on both type of newspaper, this is the model we got from the data:
+
+SLR for national newspaper: $$ numberofjournalist = 52.32 + 0,0000002771  * adrevenue  $$
+
+SLR for local newspaper: $$ numberofjournalist = 5.658 + 0.0000007012  * adrevenue  $$
+
+# Results
+
+```{r, echo=FALSE}
+
+plot(data_national$nb_journ ~ data_national$ra_cst, main = "Figure1. Scatterplot between ad revenue\n and number of journalist working in a national newspaper agency", xlab="Ad revenue", ylab="Total Number of Journalists") #scatterplot#
+abline(a = model_nat$coefficients[1], b = model_nat$coefficients[2], col="red")         #linear regression line#
+
+summary(model_nat)    #5sum
+
+plot(data_local$nb_journ ~ data_local$ra_cst, main = "Figure2. Scatterplot between ad revenue and \nnumber of journalist working in a national newspaper agency", xlab="Ad revenue", ylab="Total Number of Journalists") #scatterplot#
+abline(a = model_loc$coefficients[1], b = model_loc$coefficients[2], col="red")         #linear regression line#
+
+summary(model_loc)    #5sum
+
+```
+
+
+# Discussion
+
+Looking at both of the graphs, we can already see that there is a positive linear relationship between the 2 variables.
+
+By looking at the summary for both models, we see that the p-values for the intercept as well as the slope for both models are lower that the standard benchmark of 0.01. This mean that there are very strong evidence that we should reject the null hypothesis that there are no relationship between the revenue of a newspaper agency coming from advertising and its number of journalists. This mean there is a positive relationship between advertising revenue and the quality of the content published by the newspaper. We can also see that the R-squared for the model for national newspaper is 0.7927 and for local newspaper is 0.9045. R-squared represent of how much of the proportion of the dependent variable (number of journalist) can be explained by the explanatory variable (the ad revenue). Relatively these number are very high, indicating that the model fit quite well.
+
+The purpose of the paper is to see the effects of a reduced revenue from advertising for a newspaper agency. One of the effect that we have explained through our model is advertising revenue is positively correlated with the number of journalist working in a agency, which coincide with the quality of content produced.
+
+
+# Conclusion
+
+With the relaxed law on advertising on television and the rise of usage in Internet in recent years, advertisers have more options to choose from. Consequently, an advertiser willingness to pay for an ad in newspaper has reduced, which resulted in a negative shock in the total revenue coming from advertisement for newspaper agency. This shock has indirectly reduced the quality of the content produced by the newspaper because of with the reduction of revenue, the size of the newsroom is also reduced.
+
+# Weaknesses and next steps
+
+One of the weakness of our model comes from the fact that there are observations that has the value of "NA", which has to be omit from the model. More data is benerfical as it can help us to produce a better model with better prediction.
+
+Another weakness is that our model is a simple linear regression model. The next step could be to produce a model with multiple explanatory variables, which can help us understand better relationships between different variables.
+
+
+# References
+
+Angelucci, Charles, and Cagé, Julia. Replication data for: Newspapers in Times of Low Advertising Revenues. Nashville, TN: American Economic Association [publisher], 2019. Ann Arbor, MI: Inter-university Consortium for Political and Social Research [distributor], 2019-12-07. https://doi.org/10.3886/E116438V1
+
+
